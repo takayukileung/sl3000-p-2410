@@ -2,8 +2,8 @@
 #include "mt7981.dtsi"
 
 / {
-	model = "SL-3000 eMMC bootstrap version";
-	compatible = "sl,3000-emmc", "mediatek,mt7981";
+	model = "SL-3000";
+	compatible = "sl,3000", "mediatek,mt7981";
 
 	chosen {
 		bootargs = "console=ttyS0,115200n1 loglevel=8 \
@@ -154,11 +154,61 @@
 	status = "okay";
 };
 
-&xhci {
-	mediatek,u3p-dis-msk = <0x0>;
-	phys = <&u2port0 PHY_TYPE_USB2>,
-		   <&u3port0 PHY_TYPE_USB3>;
+&spi1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&spic_pins>;
+	status = "disabled";
+};
+
+&spi2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&spi2_flash_pins>;
 	status = "okay";
+	spi_nor@0 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "jedec,spi-nor";
+		spi-cal-enable;
+		spi-cal-mode = "read-data";
+		spi-cal-datalen = <7>;
+		spi-cal-data = /bits/ 8 <
+			0x53 0x46 0x5F 0x42 0x4F 0x4F 0x54>; /* SF_BOOT */
+		spi-cal-addrlen = <1>;
+		spi-cal-addr = /bits/ 32 <0x0>;
+		reg = <0>;
+		spi-max-frequency = <52000000>;
+		spi-tx-bus-width = <4>;
+		spi-rx-bus-width = <4>;
+
+		partition@00000 {
+			label = "BL2";
+			reg = <0x00000 0x0100000>;
+		};
+		partition@100000 {
+			label = "Config";
+			reg = <0x100000 0x080000>;
+		};
+		partition@180000 {
+			label = "Factory";
+			reg = <0x180000 0x0200000>;
+		};
+		partition@380000 {
+			label = "FIP";
+			reg = <0x380000 0x0200000>;
+		};
+		partition@580000 {
+			label = "firmware";
+			reg = <0x580000 0x1900000>;
+		};
+		partition@1E80000 {
+			label = "Product";
+			reg = <0x1E80000 0x20000>;
+		};
+		partition@1EA0000 {
+			label = "Custom";
+			reg = <0x1EA0000 0x160000>;
+		};
+	};
 };
 
 &mmc0 {
@@ -177,6 +227,32 @@
 };
 
 &pio {
+	spic_pins: spi1-pins {
+		mux {
+			function = "spi";
+			groups = "spi1_1";
+		};
+	};
+
+	spi2_flash_pins: spi2-pins {
+		mux {
+			function = "spi";
+			groups = "spi2", "spi2_wp_hold";
+		};
+
+		conf-pu {
+			pins = "SPI2_CS", "SPI2_HOLD", "SPI2_WP";
+			drive-strength = <MTK_DRIVE_8mA>;
+			bias-pull-up = <MTK_PUPD_SET_R1R0_11>;
+		};
+
+		conf-pd {
+			pins = "SPI2_CLK", "SPI2_MOSI", "SPI2_MISO";
+			drive-strength = <MTK_DRIVE_8mA>;
+			bias-pull-down = <MTK_PUPD_SET_R1R0_11>;
+		};
+	};
+	
 	mmc0_pins_default: mmc0-pins-default {
 		mux {
 			function = "flash";
@@ -190,4 +266,12 @@
 			groups = "emmc_45";
 		};
 	};
+};
+
+&wed {
+	dy_txbm_enable = "true";
+	dy_txbm_budget = <8>;
+	txbm_init_sz = <8>;
+	txbm_max_sz = <32>;
+	status = "okay";
 };

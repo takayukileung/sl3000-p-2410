@@ -211,6 +211,7 @@ platform_do_upgrade() {
 		nand_do_upgrade "$1"
 		;;
 	huasifei,wh3000-emmc|\
+	*sl,3000* |\
         *sl,3000-emmc* |\
 	cmcc,rax3000m-emmc |\
 	*emmc*)
@@ -258,6 +259,7 @@ platform_check_image() {
 	*konka,komi-a31* |\
 	nradio,wt9103 |\
 	*nokia,ea0326gmp* |\
+	*sl,3000* |\
         *sl,3000-emmc* |\
 	*snand* |\
 	*emmc*)
